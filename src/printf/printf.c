@@ -49,14 +49,16 @@ extern "C" {
 
 // Define this globally (e.g. gcc -DPRINTF_INCLUDE_CONFIG_H ...) to include the
 // printf_config.h header file
+#ifdef PRINTF_INCLUDE_CONFIG_H
 #if PRINTF_INCLUDE_CONFIG_H
 #include "printf_config.h"
+#endif
 #endif
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <printf/printf.h>
+#include "printf.h"
 
 #if PRINTF_ALIAS_STANDARD_FUNCTION_NAMES
 # define printf_    printf
@@ -355,7 +357,7 @@ static inline void append_termination_with_gadget(output_gadget_t* gadget)
 static inline void putchar_wrapper(char c, void* unused)
 {
   (void) unused;
-  putchar_(c);
+  fputc(c,stdout);
 }
 
 static inline output_gadget_t discarding_gadget()
@@ -853,7 +855,7 @@ static void print_exponential_number(output_gadget_t* output, double number, pri
 
   int floored_exp10;
   bool abs_exp10_covered_by_powers_table;
-  struct scaling_factor normalization;
+  struct scaling_factor normalization = { 0 };
 
 
   // Determine the decimal exponent
@@ -1208,9 +1210,9 @@ static int _vsnprintf(output_gadget_t* output, const char* format, va_list args)
         }
         else {
           // An unsigned specifier: u, x, X, o, b
-  
+
           flags &= ~(FLAGS_PLUS | FLAGS_SPACE);
-  
+
           if (flags & FLAGS_LONG_LONG) {
 #if PRINTF_SUPPORT_LONG_LONG
             print_integer(output, (printf_unsigned_value_t) va_arg(args, unsigned long long), false, base, precision, width, flags);
@@ -1367,11 +1369,13 @@ int vsprintf_(char* s, const char* format, va_list arg)
   return vsnprintf_(s, PRINTF_MAX_POSSIBLE_BUFFER_SIZE, format, arg);
 }
 
+#ifdef PRINTF_ALTERNATIVES
 int vfctprintf(void (*out)(char c, void* extra_arg), void* extra_arg, const char* format, va_list arg)
 {
   output_gadget_t gadget = function_gadget(out, extra_arg);
   return _vsnprintf(&gadget, format, arg);
 }
+#endif
 
 int printf_(const char* format, ...)
 {
@@ -1400,6 +1404,7 @@ int snprintf_(char* s, size_t n, const char* format, ...)
   return ret;
 }
 
+#ifdef PRINTF_ALTERNATIVES
 int fctprintf(void (*out)(char c, void* extra_arg), void* extra_arg, const char* format, ...)
 {
   va_list args;
@@ -1408,7 +1413,7 @@ int fctprintf(void (*out)(char c, void* extra_arg), void* extra_arg, const char*
   va_end(args);
   return ret;
 }
-
+#endif
 
 #ifdef __cplusplus
 } // extern "C"

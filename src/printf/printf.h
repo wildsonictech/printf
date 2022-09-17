@@ -57,8 +57,13 @@ __attribute__((format(__printf__, (one_based_format_index), (first_arg))))
 # define ATTR_VPRINTF(one_based_format_index)
 #endif
 
+#define PRINTF_ALIAS_STANDARD_FUNCTION_NAMES 1
 #ifndef PRINTF_ALIAS_STANDARD_FUNCTION_NAMES
 #define PRINTF_ALIAS_STANDARD_FUNCTION_NAMES 0
+#endif
+
+#if PRINTF_ALIAS_STANDARD_FUNCTION_NAMES
+# include  <stdio.h>
 #endif
 
 #if PRINTF_ALIAS_STANDARD_FUNCTION_NAMES
@@ -68,6 +73,7 @@ __attribute__((format(__printf__, (one_based_format_index), (first_arg))))
 # define snprintf_  snprintf
 # define vsnprintf_ vsnprintf
 # define vprintf_   vprintf
+# define putchar_   putchar
 #endif
 
 // If you want to include this implementation file directly rather than
@@ -78,6 +84,7 @@ __attribute__((format(__printf__, (one_based_format_index), (first_arg))))
 #define PRINTF_VISIBILITY
 #endif
 
+#if PRINTF_ALIAS_STANDARD_FUNCTION_NAMES == 0
 /**
  * Prints/send a single character to some opaque output entity
  *
@@ -165,7 +172,7 @@ int vsnprintf_(char* s, size_t count, const char* format, va_list arg) ATTR_VPRI
 ///@}
 
 
-
+#ifdef PRINTF_ALTERNATIVES
 /**
  * printf/vprintf with user-specified output function
  *
@@ -184,6 +191,9 @@ PRINTF_VISIBILITY
 int fctprintf(void (*out)(char c, void* extra_arg), void* extra_arg, const char* format, ...) ATTR_PRINTF(3, 4);
 PRINTF_VISIBILITY
 int vfctprintf(void (*out)(char c, void* extra_arg), void* extra_arg, const char* format, va_list arg) ATTR_VPRINTF(3);
+#endif // PRINTF_ALTERNATIVES
+
+#endif // PRINTF_ALIAS_STANDARD_FUNCTION_NAMES == 0
 
 #ifdef __cplusplus
 } // extern "C"
